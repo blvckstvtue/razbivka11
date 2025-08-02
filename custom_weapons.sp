@@ -1858,7 +1858,7 @@ bool:OnWeaponChanged(client, WeaponIndex, Sequence, bool:really_change = false)
 							}
 							KvGoBack(hKv);
 						}
-						new bool:b_flip_model = bool:KvGetNum(hKv, "flip_view_model", false);
+						new bool:b_flip_model = bool:KvGetNum(hKv, "flip_view_model", true);
 						
 						if (IsValidEdict(ClientVM2[client]))
 						{
@@ -1872,12 +1872,17 @@ bool:OnWeaponChanged(client, WeaponIndex, Sequence, bool:really_change = false)
 								SetEntProp(WeaponIndex, Prop_Send, "m_nSkin", skin_index);
 							}
 							
-							if (b_flip_model)
+							if (!b_flip_model)
 							{
+								// For left-handed models, use knife slot to flip orientation
 								new weapon = GetPlayerWeaponSlot(client, 2);
 								if (weapon != -1)
 								{
 									CSViewModel_SetWeapon(ClientVM2[client], weapon);
+								}
+								else
+								{
+									CSViewModel_SetWeapon(ClientVM2[client], WeaponIndex);
 								}
 							}
 							else
@@ -2098,18 +2103,22 @@ bool:OnWeaponChanged(client, WeaponIndex, Sequence, bool:really_change = false)
 						}
 						KvGoBack(hKv);
 					}
-					new bool:b_flip_model = bool:KvGetNum(hKv, "flip_view_model", false);
+					new bool:b_flip_model = bool:KvGetNum(hKv, "flip_view_model", true);
 					
 					if (!IsCustom[client])
 					{
 						iPrevIndex[client] = CSViewModel_GetModelIndex(ClientVM[client]);
 					}
-					if (b_flip_model)
+					// Default weapon assignment
+					CSViewModel_SetWeapon(ClientVM[client], WeaponIndex);
+					
+					if (!b_flip_model)
 					{
+						// For left-handed models, use knife slot to flip orientation
 						new weapon = GetPlayerWeaponSlot(client, 2);
 						if (weapon != -1)
 						{
-							CSViewModel_SetWeapon(ClientVM[client], WeaponIndex);
+							CSViewModel_SetWeapon(ClientVM[client], weapon);
 						}
 					}
 					SetEntProp(WeaponIndex, Prop_Send, "m_nModelIndex", 0);
