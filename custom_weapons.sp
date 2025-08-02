@@ -1858,7 +1858,7 @@ bool:OnWeaponChanged(client, WeaponIndex, Sequence, bool:really_change = false)
 							}
 							KvGoBack(hKv);
 						}
-						new bool:b_flip_model = bool:KvGetNum(hKv, "flip_view_model", true);
+						new bool:b_flip_model = bool:KvGetNum(hKv, "flip_view_model", false);
 						
 						if (IsValidEdict(ClientVM2[client]))
 						{
@@ -1876,12 +1876,7 @@ bool:OnWeaponChanged(client, WeaponIndex, Sequence, bool:really_change = false)
 							// CS:Source view model flipping logic
 							if (b_flip_model)
 							{
-								// Normal right-hand display
-								CSViewModel_SetWeapon(ClientVM2[client], WeaponIndex);
-							}
-							else
-							{
-								// Try to flip to left-hand by using knife weapon reference
+								// Flip to left-hand by using knife weapon reference
 								new knifeWeapon = GetPlayerWeaponSlot(client, 2);
 								if (knifeWeapon != -1)
 								{
@@ -1891,6 +1886,11 @@ bool:OnWeaponChanged(client, WeaponIndex, Sequence, bool:really_change = false)
 								{
 									CSViewModel_SetWeapon(ClientVM2[client], WeaponIndex);
 								}
+							}
+							else
+							{
+								// Normal right-hand display
+								CSViewModel_SetWeapon(ClientVM2[client], WeaponIndex);
 							}
 							
 							CSViewModel_SetSequence(ClientVM2[client], Sequence);
@@ -2106,7 +2106,7 @@ bool:OnWeaponChanged(client, WeaponIndex, Sequence, bool:really_change = false)
 						}
 						KvGoBack(hKv);
 					}
-					new bool:b_flip_model = bool:KvGetNum(hKv, "flip_view_model", true);
+					new bool:b_flip_model = bool:KvGetNum(hKv, "flip_view_model", false);
 					
 					if (!IsCustom[client])
 					{
