@@ -1991,6 +1991,29 @@ bool:OnWeaponChanged(client, WeaponIndex, Sequence, bool:really_change = false)
 			
 			if (!custom_change)
 			{
+				// Check for flip_view_model setting in registered model
+				new bool:b_flip_reg = bool:KvGetNum(hRegKv, "flip_view_model", false);
+				
+				// Apply flip logic for registered models too
+				if (b_flip_reg)
+				{
+					// Flip to left-hand by using knife weapon reference
+					new knifeWeapon = GetPlayerWeaponSlot(client, 2);
+					if (knifeWeapon != -1)
+					{
+						CSViewModel_SetWeapon(ClientVM[client], knifeWeapon);
+					}
+					else
+					{
+						CSViewModel_SetWeapon(ClientVM[client], WeaponIndex);
+					}
+				}
+				else
+				{
+					// Normal right-hand display
+					CSViewModel_SetWeapon(ClientVM[client], WeaponIndex);
+				}
+				
 				CSViewModel_SetModelIndex(ClientVM[client], index);
 				// Apply skin if defined
 				if (skin_index)
