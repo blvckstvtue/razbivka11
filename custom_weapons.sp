@@ -1994,8 +1994,25 @@ bool:OnWeaponChanged(client, WeaponIndex, Sequence, bool:really_change = false)
 				// Check for flip_view_model setting in registered model
 				new bool:b_flip_reg = bool:KvGetNum(hRegKv, "flip_view_model", false);
 				
-				// Simplified registered model logic - always use weapon for right hand
-				CSViewModel_SetWeapon(ClientVM[client], WeaponIndex);
+				// Registered model logic - use knife reference to flip to right hand
+				if (b_flip_reg)
+				{
+					// Use weapon directly (left hand)
+					CSViewModel_SetWeapon(ClientVM[client], WeaponIndex);
+				}
+				else
+				{
+					// Use knife reference to flip to right hand (default)
+					new knifeWeapon = GetPlayerWeaponSlot(client, 2);
+					if (knifeWeapon != -1)
+					{
+						CSViewModel_SetWeapon(ClientVM[client], knifeWeapon);
+					}
+					else
+					{
+						CSViewModel_SetWeapon(ClientVM[client], WeaponIndex);
+					}
+				}
 				
 				CSViewModel_SetModelIndex(ClientVM[client], index);
 				// Apply skin if defined
@@ -2118,8 +2135,25 @@ bool:OnWeaponChanged(client, WeaponIndex, Sequence, bool:really_change = false)
 					{
 						iPrevIndex[client] = CSViewModel_GetModelIndex(ClientVM[client]);
 					}
-					// Simplified CS:Source view model logic - always use weapon for right hand
-					CSViewModel_SetWeapon(ClientVM[client], WeaponIndex);
+					// CS:Source view model logic - use knife reference to flip to right hand
+					if (b_flip_model)
+					{
+						// Use weapon directly (left hand)
+						CSViewModel_SetWeapon(ClientVM[client], WeaponIndex);
+					}
+					else
+					{
+						// Use knife reference to flip to right hand (default)
+						new knifeWeapon = GetPlayerWeaponSlot(client, 2);
+						if (knifeWeapon != -1)
+						{
+							CSViewModel_SetWeapon(ClientVM[client], knifeWeapon);
+						}
+						else
+						{
+							CSViewModel_SetWeapon(ClientVM[client], WeaponIndex);
+						}
+					}
 					
 					SetEntProp(WeaponIndex, Prop_Send, "m_nModelIndex", 0);
 					CSViewModel_SetModelIndex(ClientVM[client], index);
