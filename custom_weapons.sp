@@ -1905,13 +1905,10 @@ bool:OnWeaponChanged(client, WeaponIndex, Sequence, bool:really_change = false)
 							CSViewModel_SetSequence(ClientVM2[client], Sequence);
 							CSViewModel_SetPlaybackRate(ClientVM2[client], CSViewModel_GetPlaybackRate(ClientVM[client]));
 							
-							// Flip the view model visually to right-handed by default
+							// Force right-handed view for custom models
 							if (b_flip_model)
 							{
-								new Float:angles[3];
-								GetEntPropVector(ClientVM2[client], Prop_Send, "m_angRotation", angles);
-								angles[1] += 180.0; // Flip Y-axis
-								SetEntPropVector(ClientVM2[client], Prop_Send, "m_angRotation", angles);
+								ClientCommand(client, "cl_righthand 1");
 							}
 							
 							IsCustom[client] = true;
@@ -2147,13 +2144,10 @@ bool:OnWeaponChanged(client, WeaponIndex, Sequence, bool:really_change = false)
 						SetEntProp(WeaponIndex, Prop_Send, "m_nSkin", skin_index);
 					}
 					
-					// Flip the view model visually to right-handed by default
+					// Force right-handed view for custom models
 					if (b_flip_model)
 					{
-						new Float:angles[3];
-						GetEntPropVector(ClientVM[client], Prop_Send, "m_angRotation", angles);
-						angles[1] += 180.0; // Flip Y-axis
-						SetEntPropVector(ClientVM[client], Prop_Send, "m_angRotation", angles);
+						ClientCommand(client, "cl_righthand 1");
 					}
 					
 					IsCustom[client] = true;
