@@ -1881,16 +1881,19 @@ bool:OnWeaponChanged(client, WeaponIndex, Sequence, bool:really_change = false)
 								if (knifeWeapon != -1)
 								{
 									CSViewModel_SetWeapon(ClientVM2[client], knifeWeapon);
+									PrintToConsole(client, "[CW] Set LEFT hand (knife ref) for ClientVM2");
 								}
 								else
 								{
 									CSViewModel_SetWeapon(ClientVM2[client], WeaponIndex);
+									PrintToConsole(client, "[CW] Set LEFT hand (weapon) for ClientVM2");
 								}
 							}
 							else
 							{
 								// Normal right-hand display
 								CSViewModel_SetWeapon(ClientVM2[client], WeaponIndex);
+								PrintToConsole(client, "[CW] Set RIGHT hand for ClientVM2");
 							}
 							
 							CSViewModel_SetSequence(ClientVM2[client], Sequence);
@@ -2002,16 +2005,19 @@ bool:OnWeaponChanged(client, WeaponIndex, Sequence, bool:really_change = false)
 					if (knifeWeapon != -1)
 					{
 						CSViewModel_SetWeapon(ClientVM[client], knifeWeapon);
+						PrintToConsole(client, "[CW REG] Set LEFT hand (knife ref) for ClientVM");
 					}
 					else
 					{
 						CSViewModel_SetWeapon(ClientVM[client], WeaponIndex);
+						PrintToConsole(client, "[CW REG] Set LEFT hand (weapon) for ClientVM");
 					}
 				}
 				else
 				{
 					// Normal right-hand display
 					CSViewModel_SetWeapon(ClientVM[client], WeaponIndex);
+					PrintToConsole(client, "[CW REG] Set RIGHT hand for ClientVM");
 				}
 				
 				CSViewModel_SetModelIndex(ClientVM[client], index);
@@ -2143,16 +2149,19 @@ bool:OnWeaponChanged(client, WeaponIndex, Sequence, bool:really_change = false)
 						if (knifeWeapon != -1)
 						{
 							CSViewModel_SetWeapon(ClientVM[client], knifeWeapon);
+							PrintToConsole(client, "[CW] Set LEFT hand (knife ref) for ClientVM");
 						}
 						else
 						{
 							CSViewModel_SetWeapon(ClientVM[client], WeaponIndex);
+							PrintToConsole(client, "[CW] Set LEFT hand (weapon) for ClientVM");
 						}
 					}
 					else
 					{
 						// Normal right-hand display
 						CSViewModel_SetWeapon(ClientVM[client], WeaponIndex);
+						PrintToConsole(client, "[CW] Set RIGHT hand for ClientVM");
 					}
 					
 					SetEntProp(WeaponIndex, Prop_Send, "m_nModelIndex", 0);
