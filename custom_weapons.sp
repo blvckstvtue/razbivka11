@@ -35,7 +35,8 @@ new Handle:g_hTrieSequence[MAXPLAYERS+1];
 
 new bool:g_bMuzzleFlash[MAXPLAYERS+1],
 	Float:g_fMuzzleScale[MAXPLAYERS+1],
-Float:g_fMuzzlePos[MAXPLAYERS+1][3];
+Float:g_fMuzzlePos[MAXPLAYERS+1][3],
+bool:g_bFlipViewModel[MAXPLAYERS+1];
 
 new m_hMyWeapons;
 
@@ -501,6 +502,7 @@ public OnMapEnd()
 	{
 		g_bMenuSpawn[i] = bCvar_ForceSpawnMenu;
 		NextChange[i] = 0.0;
+		g_bFlipViewModel[i] = true;
 	}
 }
 
@@ -717,6 +719,7 @@ public OnClientPutInServer(client)
 	hPlugin[client] = INVALID_HANDLE;
 	weapon_switch[client] = INVALID_FUNCTION;
 	weapon_sequence[client] = INVALID_FUNCTION;
+	g_bFlipViewModel[client] = true; // Default to right hand
 	
 	if (IsFakeClient(client))
 	{
@@ -814,6 +817,7 @@ public OnClientDisconnect_Post(client)
 	NextChange[client] = 0.0;
 	g_bDev[client] = false;
 	g_bEnabled[client] = false;
+	g_bFlipViewModel[client] = true;
 	
 	hPlugin[client] = INVALID_HANDLE;
 	weapon_switch[client] = INVALID_FUNCTION;
@@ -1123,6 +1127,7 @@ public OnRoundStart(Handle:event, const String:name[], bool:dontBroadcast)
 	for (new client = 1; client <= MaxClients; client++)
 	{
 		OldBits[client] = 0;
+		g_bFlipViewModel[client] = true; // Reset to right hand
 		for (new i = 0; i < Type_Max; i++)
 		{
 			WeaponAddons[client][i] = 0;
@@ -1372,6 +1377,10 @@ public OnPostThinkPost_Old(client)
 	
 	if (WeaponIndex != OldWeapon[client] && !OnWeaponChanged(client, WeaponIndex, Sequence))
 	{
+		if (g_bDev[client])
+		{
+			PrintToChat(client, "\x03Weapon changed from %d to %d", OldWeapon[client], WeaponIndex);
+		}
 		OldWeapon[client] = WeaponIndex;
 		return;
 	}
@@ -1503,6 +1512,10 @@ public OnPostThinkPost(client)
 	
 	if (WeaponIndex != OldWeapon[client] && !OnWeaponChanged(client, WeaponIndex, Sequence, true))
 	{
+		if (g_bDev[client])
+		{
+			PrintToChat(client, "\x03Weapon changed from %d to %d (really_change)", OldWeapon[client], WeaponIndex);
+		}
 		OldWeapon[client] = WeaponIndex;
 		return;
 	}
@@ -1859,7 +1872,11 @@ bool:OnWeaponChanged(client, WeaponIndex, Sequence, bool:really_change = false)
 							}
 							KvGoBack(hKv);
 						}
-						new bool:b_flip_model = bool:KvGetNum(hKv, "flip_view_model", true);
+						g_bFlipViewModel[client] = bool:KvGetNum(hKv, "flip_view_model", true);
+						if (g_bDev[client])
+						{
+							PrintToChat(client, "\x04flip_view_model: %s", g_bFlipViewModel[client] ? "true" : "false");
+						}
 						
 						if (IsValidEdict(ClientVM2[client]))
 						{
@@ -1873,7 +1890,7 @@ bool:OnWeaponChanged(client, WeaponIndex, Sequence, bool:really_change = false)
 								SetEntProp(WeaponIndex, Prop_Send, "m_nSkin", skin_index);
 							}
 							
-							if (b_flip_model)
+							if (g_bFlipViewModel[client])
 							{
 								// Use knife as proxy to show weapon in right hand
 								new weapon = GetPlayerWeaponSlot(client, 2);
@@ -2100,13 +2117,17 @@ bool:OnWeaponChanged(client, WeaponIndex, Sequence, bool:really_change = false)
 						}
 						KvGoBack(hKv);
 					}
-					new bool:b_flip_model = bool:KvGetNum(hKv, "flip_view_model", true);
+					g_bFlipViewModel[client] = bool:KvGetNum(hKv, "flip_view_model", true);
+					if (g_bDev[client])
+					{
+						PrintToChat(client, "\x04flip_view_model (new): %s", g_bFlipViewModel[client] ? "true" : "false");
+					}
 					
 					if (!IsCustom[client])
 					{
 						iPrevIndex[client] = CSViewModel_GetModelIndex(ClientVM[client]);
 					}
-					if (b_flip_model)
+					if (g_bFlipViewModel[client])
 					{
 						// Use knife as proxy to show weapon in right hand
 						new weapon = GetPlayerWeaponSlot(client, 2);
