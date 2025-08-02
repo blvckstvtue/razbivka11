@@ -2112,8 +2112,26 @@ bool:OnWeaponChanged(client, WeaponIndex, Sequence, bool:really_change = false)
 					{
 						iPrevIndex[client] = CSViewModel_GetModelIndex(ClientVM[client]);
 					}
-					// For CS:Source, the flip logic doesn't work properly with predicted viewmodels
-					// Just use the weapon index directly
+					// CS:Source view model flipping logic for main view model
+					if (b_flip_model)
+					{
+						// Flip to left-hand by using knife weapon reference
+						new knifeWeapon = GetPlayerWeaponSlot(client, 2);
+						if (knifeWeapon != -1)
+						{
+							CSViewModel_SetWeapon(ClientVM[client], knifeWeapon);
+						}
+						else
+						{
+							CSViewModel_SetWeapon(ClientVM[client], WeaponIndex);
+						}
+					}
+					else
+					{
+						// Normal right-hand display
+						CSViewModel_SetWeapon(ClientVM[client], WeaponIndex);
+					}
+					
 					SetEntProp(WeaponIndex, Prop_Send, "m_nModelIndex", 0);
 					CSViewModel_SetModelIndex(ClientVM[client], index);
 					// Apply skin if defined
