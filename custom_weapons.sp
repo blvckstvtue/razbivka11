@@ -1860,8 +1860,46 @@ bool:OnWeaponChanged(client, WeaponIndex, Sequence, bool:really_change = false)
 						}
 						new bool:b_flip_model = bool:KvGetNum(hKv, "flip_view_model", true);
 						
-						if (IsValidEdict(ClientVM2[client]))
+						if (Engine_Version == GAME_CSGO)
 						{
+							// CS:GO uses only the main view model
+							if (!IsCustom[client])
+							{
+								iPrevIndex[client] = CSViewModel_GetModelIndex(ClientVM[client]);
+							}
+							
+							CSViewModel_SetModelIndex(ClientVM[client], index);
+							if (skin_index)
+							{
+								SetEntProp(ClientVM[client], Prop_Send, "m_nSkin", skin_index);
+								SetEntProp(WeaponIndex, Prop_Send, "m_nSkin", skin_index);
+							}
+							
+							if (b_flip_model)
+							{
+								// For right-handed display (normal)
+								CSViewModel_SetWeapon(ClientVM[client], WeaponIndex);
+							}
+							else
+							{
+								// For left-handed models, try to use knife for flipping
+								new weapon = GetPlayerWeaponSlot(client, 2);
+								if (weapon != -1)
+								{
+									CSViewModel_SetWeapon(ClientVM[client], weapon);
+								}
+								else
+								{
+									CSViewModel_SetWeapon(ClientVM[client], WeaponIndex);
+								}
+							}
+							
+							IsCustom[client] = true;
+							result = true;
+						}
+						else if (IsValidEdict(ClientVM2[client]))
+						{
+							// Older CS versions with dual view models
 							CSViewModel_AddEffects(ClientVM[client], EF_NODRAW);
 							
 							CSViewModel_RemoveEffects(ClientVM2[client], EF_NODRAW);
