@@ -782,9 +782,18 @@ CacheModels(Handle:kv)
 						
 						KvGetString(hKv, "flags", buffer, sizeof(buffer));
 						StringToLower(buffer, buffer, sizeof(buffer));
-						// Store skin index if specified
-						new iSkin = KvGetNum(kv, "skin", 0);
-						KvSetNum(kv, "skin_index", iSkin);
+						// Store skin index only if skin is explicitly specified in config
+						decl String:skin_check[8];
+						KvGetString(kv, "skin", skin_check, sizeof(skin_check));
+						if (skin_check[0] != '\0')  // Only set skin_index if "skin" key exists and has a value
+						{
+							new iSkin = KvGetNum(kv, "skin", 0);
+							KvSetNum(kv, "skin_index", iSkin);
+						}
+						else
+						{
+							KvSetNum(kv, "skin_index", -1);  // Use -1 to indicate no skin should be applied
+						}
 						KvSetNum(hKv, "flag_bits", ReadFlagString(buffer));
 						
 						KvGetString(kv, "view_model", buffer, sizeof(buffer));
@@ -1839,7 +1848,7 @@ bool:OnWeaponChanged(client, WeaponIndex, Sequence, bool:really_change = false)
 		}
 		
 		new world_model;
-		new skin_index = 0;
+		new skin_index = -1;
 		
 		Function_OnWeaponSwitch(hPlugin[client], weapon_switch[client], client, WeaponIndex, ClientVM2[client], OldSequence[client], Sequence);
 		
@@ -1881,7 +1890,7 @@ bool:OnWeaponChanged(client, WeaponIndex, Sequence, bool:really_change = false)
 					if (index != 0)
 					{
 						CSViewModel_SetModelIndex(ClientVM2[client], index);
-						if (skin_index)
+						if (skin_index >= 0)  // Apply skin only if explicitly set (not -1)
 						{
 							SetEntProp(ClientVM2[client], Prop_Send, "m_nSkin", skin_index);
 							SetEntProp(WeaponIndex, Prop_Send, "m_nSkin", skin_index);
@@ -2013,7 +2022,7 @@ bool:OnWeaponChanged(client, WeaponIndex, Sequence, bool:really_change = false)
 							
 							CSViewModel_RemoveEffects(ClientVM2[client], EF_NODRAW);
 							CSViewModel_SetModelIndex(ClientVM2[client], index);
-							if (skin_index)
+							if (skin_index >= 0)  // Apply skin only if explicitly set (not -1)
 							{
 								SetEntProp(ClientVM2[client], Prop_Send, "m_nSkin", skin_index);
 								SetEntProp(WeaponIndex, Prop_Send, "m_nSkin", skin_index);
@@ -2061,7 +2070,7 @@ bool:OnWeaponChanged(client, WeaponIndex, Sequence, bool:really_change = false)
 			if (world_model > 0)
 			{
 				SetEntProp(WeaponIndex, Prop_Send, "m_iWorldModelIndex", world_model);
-				if (skin_index)
+				if (skin_index >= 0)  // Apply skin only if explicitly set (not -1)
 				{
 					SetEntProp(WeaponIndex, Prop_Send, "m_nSkin", skin_index);
 				}
@@ -2089,7 +2098,7 @@ bool:OnWeaponChanged(client, WeaponIndex, Sequence, bool:really_change = false)
 	}
 	
 	new world_model, dropped_model;
-	new skin_index = 0;
+	new skin_index = -1;
 	
 	Function_OnWeaponSwitch(hPlugin[client], weapon_switch[client], client, WeaponIndex, ClientVM[client], OldSequence[client], Sequence);
 	
@@ -2119,7 +2128,7 @@ bool:OnWeaponChanged(client, WeaponIndex, Sequence, bool:really_change = false)
 		else 
 		{
 			new index = KvGetNum(hRegKv, "view_model_index");
-			skin_index = KvGetNum(hRegKv, "skin_index", 0);
+			skin_index = KvGetNum(hRegKv, "skin_index", -1);
 			
 			if (!IsCustom[client])
 			{
@@ -2131,8 +2140,8 @@ bool:OnWeaponChanged(client, WeaponIndex, Sequence, bool:really_change = false)
 			if (!custom_change)
 			{
 				CSViewModel_SetModelIndex(ClientVM[client], index);
-				// Apply skin if defined
-				if (skin_index)
+				// Apply skin only if explicitly set (not -1)
+				if (skin_index >= 0)
 				{
 					SetEntProp(ClientVM[client], Prop_Send, "m_nSkin", skin_index);
 					SetEntProp(WeaponIndex, Prop_Send, "m_nSkin", skin_index);
@@ -2188,7 +2197,7 @@ bool:OnWeaponChanged(client, WeaponIndex, Sequence, bool:really_change = false)
 							{
 								index = KvGetNum(hKv, "view_model_index");
 								// Use selected skin if available, otherwise use default
-								skin_index = has_skin ? selected_skin : KvGetNum(hKv, "skin_index", 0);
+								skin_index = has_skin ? selected_skin : KvGetNum(hKv, "skin_index", -1);
 								world_model = KvGetNum(hKv, "world_model_index");
 								dropped_model = KvGetNum(hKv, "drop_model_index");
 								
@@ -2215,7 +2224,7 @@ bool:OnWeaponChanged(client, WeaponIndex, Sequence, bool:really_change = false)
 				{
 					index = KvGetNum(hKv, "view_model_index");
 					// Use selected skin if available, otherwise use default
-					skin_index = has_skin ? selected_skin : KvGetNum(hKv, "skin_index", 0);
+					skin_index = has_skin ? selected_skin : KvGetNum(hKv, "skin_index", -1);
 					world_model = KvGetNum(hKv, "world_model_index");
 					dropped_model = KvGetNum(hKv, "drop_model_index");
 					
@@ -2261,8 +2270,8 @@ bool:OnWeaponChanged(client, WeaponIndex, Sequence, bool:really_change = false)
 					}
 					SetEntProp(WeaponIndex, Prop_Send, "m_nModelIndex", 0);
 					CSViewModel_SetModelIndex(ClientVM[client], index);
-					// Apply skin if defined
-					if (skin_index)
+					// Apply skin only if explicitly set (not -1)
+					if (skin_index >= 0)
 					{
 						SetEntProp(ClientVM[client], Prop_Send, "m_nSkin", skin_index);
 						SetEntProp(WeaponIndex, Prop_Send, "m_nSkin", skin_index);
@@ -2296,7 +2305,7 @@ bool:OnWeaponChanged(client, WeaponIndex, Sequence, bool:really_change = false)
 		if (world_model > 0)
 		{
 			SetEntProp(WeaponIndex, Prop_Send, "m_iWorldModelIndex", world_model);
-			if (skin_index)
+			if (skin_index >= 0)  // Apply skin only if explicitly set (not -1)
 			{
 				SetEntProp(WeaponIndex, Prop_Send, "m_nSkin", skin_index);
 			}
