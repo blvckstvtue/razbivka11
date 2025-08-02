@@ -35,7 +35,8 @@ new Handle:g_hTrieSequence[MAXPLAYERS+1];
 
 new bool:g_bMuzzleFlash[MAXPLAYERS+1],
 	Float:g_fMuzzleScale[MAXPLAYERS+1],
-Float:g_fMuzzlePos[MAXPLAYERS+1][3];
+Float:g_fMuzzlePos[MAXPLAYERS+1][3],
+bool:g_bFlipViewModel[MAXPLAYERS+1];
 
 new m_hMyWeapons;
 
@@ -396,6 +397,10 @@ public OnConVarChange(Handle:convar, const String:oldValue[], const String:newVa
 				new weapon = CSPlayer_GetActiveWeapon(client);
 				if (weapon != -1)
 				{
+					if (g_bDev[client])
+					{
+						PrintToChat(client, "\x06OnWeaponChanged called from OnConVarChange (hCvar_Enable)");
+					}
 					OnWeaponChanged(client, weapon, CSViewModel_GetSequence(ClientVM[client]));
 				}
 				
@@ -439,6 +444,10 @@ public OnConVarChange(Handle:convar, const String:oldValue[], const String:newVa
 							CSViewModel_RemoveEffects(ClientVM2[client], EF_NODRAW);
 							CSViewModel_AddEffects(ClientVM[client], EF_NODRAW);
 							
+							if (g_bDev[client])
+							{
+								PrintToChat(client, "\x06OnWeaponChanged called from OnConVarChange (OldStyleModelChange - true)");
+							}
 							OnWeaponChanged(client, CSPlayer_GetActiveWeapon(client), CSViewModel_GetSequence(ClientVM[client]));
 						}
 						SDKUnhook(client, SDKHook_PostThinkPost, OnPostThinkPost);
@@ -451,6 +460,10 @@ public OnConVarChange(Handle:convar, const String:oldValue[], const String:newVa
 							CSViewModel_AddEffects(ClientVM2[client], EF_NODRAW);
 							CSViewModel_RemoveEffects(ClientVM[client], EF_NODRAW);
 							
+							if (g_bDev[client])
+							{
+								PrintToChat(client, "\x06OnWeaponChanged called from OnConVarChange (OldStyleModelChange - false)");
+							}
 							OnWeaponChanged(client, CSPlayer_GetActiveWeapon(client), CSViewModel_GetSequence(ClientVM[client]));
 						}
 						SDKUnhook(client, SDKHook_PostThinkPost, OnPostThinkPost_Old);
@@ -501,6 +514,7 @@ public OnMapEnd()
 	{
 		g_bMenuSpawn[i] = bCvar_ForceSpawnMenu;
 		NextChange[i] = 0.0;
+		g_bFlipViewModel[i] = true;
 	}
 }
 
@@ -717,6 +731,7 @@ public OnClientPutInServer(client)
 	hPlugin[client] = INVALID_HANDLE;
 	weapon_switch[client] = INVALID_FUNCTION;
 	weapon_sequence[client] = INVALID_FUNCTION;
+	g_bFlipViewModel[client] = true; // Default to right hand
 	
 	if (IsFakeClient(client))
 	{
@@ -814,6 +829,7 @@ public OnClientDisconnect_Post(client)
 	NextChange[client] = 0.0;
 	g_bDev[client] = false;
 	g_bEnabled[client] = false;
+	g_bFlipViewModel[client] = true;
 	
 	hPlugin[client] = INVALID_HANDLE;
 	weapon_switch[client] = INVALID_FUNCTION;
@@ -1123,6 +1139,7 @@ public OnRoundStart(Handle:event, const String:name[], bool:dontBroadcast)
 	for (new client = 1; client <= MaxClients; client++)
 	{
 		OldBits[client] = 0;
+		g_bFlipViewModel[client] = true; // Reset to right hand
 		for (new i = 0; i < Type_Max; i++)
 		{
 			WeaponAddons[client][i] = 0;
@@ -1225,6 +1242,8 @@ OnPrePostThinkPost(client)
 		
 		WeaponAddons[client][Type_Primary] = 0;
 	}
+
+	
 	if (bits & CSAddon_C4)
 	{
 		if (!(OldBits[client] & CSAddon_C4))
@@ -1258,6 +1277,7 @@ OnPrePostThinkPost(client)
 	{
 		bits_to_remove |= CSAddon_PrimaryWeapon;
 	}
+
 	if (WeaponAddons[client][Type_C4] != 0)
 	{
 		bits_to_remove |= CSAddon_C4;
@@ -1369,11 +1389,14 @@ public OnPostThinkPost_Old(client)
 	
 	if (WeaponIndex != OldWeapon[client] && !OnWeaponChanged(client, WeaponIndex, Sequence))
 	{
+		if (g_bDev[client])
+		{
+			PrintToChat(client, "\x03Weapon changed from %d to %d (OldStyle)", OldWeapon[client], WeaponIndex);
+		}
 		OldWeapon[client] = WeaponIndex;
 		return;
 	}
-	else
-	if (IsCustom[client])
+	else if (IsCustom[client])
 	{
 		if (g_bDev[client])
 		{
@@ -1501,11 +1524,14 @@ public OnPostThinkPost(client)
 	
 	if (WeaponIndex != OldWeapon[client] && !OnWeaponChanged(client, WeaponIndex, Sequence, true))
 	{
+		if (g_bDev[client])
+		{
+			PrintToChat(client, "\x03Weapon changed from %d to %d (NewStyle)", OldWeapon[client], WeaponIndex);
+		}
 		OldWeapon[client] = WeaponIndex;
 		return;
 	}
-	else
-	if (IsCustom[client])
+	else if (IsCustom[client])
 	{
 		switch (Function_OnWeaponThink(hPlugin[client], weapon_sequence[client], client, WeaponIndex, ClientVM[client], OldSequence[client], Sequence))
 		{
@@ -1672,6 +1698,11 @@ public OnWeaponEquipPost(client, weapon)
 }
 
 bool:OnWeaponChanged(client, WeaponIndex, Sequence, bool:really_change = false)
+{
+	if (g_bDev[client])
+	{
+		PrintToChat(client, "\x02OnWeaponChanged called - Weapon: %d, really_change: %s", WeaponIndex, really_change ? "true" : "false");
+	}
 {
 	if (Engine_Version == GAME_CSS_34 || (Engine_Version == GAME_CSS && bCvar_OldStyleModelChange))
 	{
@@ -1858,7 +1889,11 @@ bool:OnWeaponChanged(client, WeaponIndex, Sequence, bool:really_change = false)
 							}
 							KvGoBack(hKv);
 						}
-						new bool:b_flip_model = bool:KvGetNum(hKv, "flip_view_model", false);
+						g_bFlipViewModel[client] = bool:KvGetNum(hKv, "flip_view_model", true);
+						if (g_bDev[client])
+						{
+							PrintToChat(client, "\x04flip_view_model: %s", g_bFlipViewModel[client] ? "true" : "false");
+						}
 						
 						if (IsValidEdict(ClientVM2[client]))
 						{
@@ -1872,8 +1907,9 @@ bool:OnWeaponChanged(client, WeaponIndex, Sequence, bool:really_change = false)
 								SetEntProp(WeaponIndex, Prop_Send, "m_nSkin", skin_index);
 							}
 							
-							if (b_flip_model)
+							if (g_bFlipViewModel[client])
 							{
+								// Use knife as proxy to show weapon in right hand
 								new weapon = GetPlayerWeaponSlot(client, 2);
 								if (weapon != -1)
 								{
@@ -2098,18 +2134,23 @@ bool:OnWeaponChanged(client, WeaponIndex, Sequence, bool:really_change = false)
 						}
 						KvGoBack(hKv);
 					}
-					new bool:b_flip_model = bool:KvGetNum(hKv, "flip_view_model", false);
+					g_bFlipViewModel[client] = bool:KvGetNum(hKv, "flip_view_model", true);
+					if (g_bDev[client])
+					{
+						PrintToChat(client, "\x04flip_view_model (new): %s", g_bFlipViewModel[client] ? "true" : "false");
+					}
 					
 					if (!IsCustom[client])
 					{
 						iPrevIndex[client] = CSViewModel_GetModelIndex(ClientVM[client]);
 					}
-					if (b_flip_model)
+					if (g_bFlipViewModel[client])
 					{
+						// Use knife as proxy to show weapon in right hand
 						new weapon = GetPlayerWeaponSlot(client, 2);
 						if (weapon != -1)
 						{
-							CSViewModel_SetWeapon(ClientVM[client], WeaponIndex);
+							CSViewModel_SetWeapon(ClientVM[client], weapon);
 						}
 					}
 					SetEntProp(WeaponIndex, Prop_Send, "m_nModelIndex", 0);
@@ -2319,6 +2360,10 @@ public MainMenu_Handler(Handle:menu, MenuAction:action, param1, param2)
 						{
 							NextChange[param1] = game_time + 5.0;
 							
+							if (g_bDev[param1])
+							{
+								PrintToChat(param1, "\x05OnWeaponChanged called from menu (case 7)");
+							}
 							OnWeaponChanged(param1, weapon, CSViewModel_GetSequence(ClientVM[param1]));
 							OldBits[param1] = 0;
 						}
