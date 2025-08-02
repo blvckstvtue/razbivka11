@@ -646,6 +646,7 @@ CacheModels(Handle:kv)
 						}
 						
 						// Store flip_view_model setting if specified
+						// Note: flip_view_model in this plugin changes weapon reference, not visual flip
 						if (KvGetNum(kv, "flip_view_model", -1) != -1)
 						{
 							KvSetNum(hKv, "flip_view_model", KvGetNum(kv, "flip_view_model", 0));
