@@ -65,6 +65,31 @@ new String:g_sServLang[3];
 new String:g_sDroppedModel[32] = "world_model_index";
 new iPrevIndex[MAXPLAYERS+1];
 
+
+
+new Handle:hCvar_Enable, bool:bCvar_Enable;
+new Handle:hCvar_SpawnMenu, bool:bCvar_SpawnMenu;
+new Handle:hCvar_OldStyleModelChange, bool:bCvar_OldStyleModelChange;
+new Handle:hCvar_ForceSpawnMenu, bool:bCvar_ForceSpawnMenu;
+new Handle:hCvar_DefaultDisabled, bool:bCvar_DefaultDisabled;
+new Handle:hCvar_ForceDisabled, bool:bCvar_ForceDisabled;
+new Handle:hCvar_MenuCloseNotice, bool:bCvar_MenuCloseNotice;
+new Handle:hCvar_AdminFlags, iCvar_AdminFlags;
+new Handle:hCvar_WeaponsPath, String:sCvar_WeaponsPath[PLATFORM_MAX_PATH];
+new Handle:hCvar_DownloadsPath, String:sCvar_DownloadsPath[PLATFORM_MAX_PATH];
+
+
+
+new Handle:hKv;
+new bool:g_bShouldLoadReload = true;
+new Handle:hRegKv;
+new Handle:hRegTrie;
+new g_iTable = INVALID_STRING_TABLE;
+
+new Handle:hTrie_Cookies;
+new bool:g_bDev[MAXPLAYERS+1];
+new iCycle[MAXPLAYERS+1], Float:next_cycle[MAXPLAYERS+1];
+
 // Function to set the correct view model weapon for CS:Source
 SetCorrectViewModelWeapon(client, weaponIndex)
 {
@@ -100,31 +125,6 @@ SetCorrectViewModelWeapon(client, weaponIndex)
 		CSViewModel_SetWeapon(ClientVM[client], weaponIndex);
 	}
 }
-
-
-
-new Handle:hCvar_Enable, bool:bCvar_Enable;
-new Handle:hCvar_SpawnMenu, bool:bCvar_SpawnMenu;
-new Handle:hCvar_OldStyleModelChange, bool:bCvar_OldStyleModelChange;
-new Handle:hCvar_ForceSpawnMenu, bool:bCvar_ForceSpawnMenu;
-new Handle:hCvar_DefaultDisabled, bool:bCvar_DefaultDisabled;
-new Handle:hCvar_ForceDisabled, bool:bCvar_ForceDisabled;
-new Handle:hCvar_MenuCloseNotice, bool:bCvar_MenuCloseNotice;
-new Handle:hCvar_AdminFlags, iCvar_AdminFlags;
-new Handle:hCvar_WeaponsPath, String:sCvar_WeaponsPath[PLATFORM_MAX_PATH];
-new Handle:hCvar_DownloadsPath, String:sCvar_DownloadsPath[PLATFORM_MAX_PATH];
-
-
-
-new Handle:hKv;
-new bool:g_bShouldLoadReload = true;
-new Handle:hRegKv;
-new Handle:hRegTrie;
-new g_iTable = INVALID_STRING_TABLE;
-
-new Handle:hTrie_Cookies;
-new bool:g_bDev[MAXPLAYERS+1];
-new iCycle[MAXPLAYERS+1], Float:next_cycle[MAXPLAYERS+1];
 
 public Plugin:myinfo =
 {
