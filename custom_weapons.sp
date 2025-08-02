@@ -90,6 +90,44 @@ new Handle:hTrie_Cookies;
 new bool:g_bDev[MAXPLAYERS+1];
 new iCycle[MAXPLAYERS+1], Float:next_cycle[MAXPLAYERS+1];
 
+// Function to set the correct view model weapon for CS:Source
+SetCorrectViewModelWeapon(client, weaponIndex)
+{
+	if (Engine_Version == GAME_CSS && !bCvar_OldStyleModelChange)
+	{
+		// Check if this is a knife weapon
+		decl String:className[32];
+		GetEdictClassname(weaponIndex, className, sizeof(className));
+		StringToLower(className, className, sizeof(className));
+		
+		if (StrEqual(className, "weapon_knife"))
+		{
+			// For knives, use weapon directly (keeps them on right hand)
+			CSViewModel_SetWeapon(ClientVM[client], weaponIndex);
+		}
+		else
+		{
+			// For other weapons, use knife reference to show on right hand
+			new knifeWeapon = GetPlayerWeaponSlot(client, 2);
+			if (knifeWeapon != -1)
+			{
+				CSViewModel_SetWeapon(ClientVM[client], knifeWeapon);
+			}
+			else
+			{
+				CSViewModel_SetWeapon(ClientVM[client], weaponIndex);
+			}
+		}
+	}
+	else
+	{
+		// For other versions, use weapon directly
+		CSViewModel_SetWeapon(ClientVM[client], weaponIndex);
+	}
+}
+
+
+
 public Plugin:myinfo =
 {
 	name = "[CS] Custom Weapons",
@@ -183,7 +221,7 @@ public OnPluginStart()
 	bCvar_MenuCloseNotice = GetConVarBool(hCvar_MenuCloseNotice);
 	HookConVarChange(hCvar_MenuCloseNotice, OnConVarChange);
 	
-	hCvar_OldStyleModelChange = CreateConVar("sm_custom_weapons_css_old_style_model_change", "0", "CS:S OB Use old style model change method for flip view model support. Not recommended! May reduce server performance", FCVAR_PLUGIN, true, 0.0, true, 1.0);
+	hCvar_OldStyleModelChange = CreateConVar("sm_custom_weapons_css_old_style_model_change", "1", "CS:S OB Use old style model change method for flip view model support. Not recommended! May reduce server performance", FCVAR_PLUGIN, true, 0.0, true, 1.0);
 	bCvar_OldStyleModelChange = GetConVarBool(hCvar_OldStyleModelChange);
 	HookConVarChange(hCvar_OldStyleModelChange, OnConVarChange);
 	
@@ -1571,6 +1609,12 @@ public OnPostThinkPost(client)
 	OldWeapon[client] = WeaponIndex;
 	OldSequence[client] = Sequence;
 	OldCycle[client] = Cycle;
+	
+	// Ensure view model weapon stays correct for CS:Source
+	if (IsCustom[client] && Engine_Version == GAME_CSS && !bCvar_OldStyleModelChange)
+	{
+		SetCorrectViewModelWeapon(client, WeaponIndex);
+	}
 }
 
 public OnWeaponEquipPost(client, weapon)
@@ -1862,6 +1906,7 @@ bool:OnWeaponChanged(client, WeaponIndex, Sequence, bool:really_change = false)
 						
 						if (IsValidEdict(ClientVM2[client]))
 						{
+							// Older CS versions with dual view models
 							CSViewModel_AddEffects(ClientVM[client], EF_NODRAW);
 							
 							CSViewModel_RemoveEffects(ClientVM2[client], EF_NODRAW);
@@ -1872,16 +1917,23 @@ bool:OnWeaponChanged(client, WeaponIndex, Sequence, bool:really_change = false)
 								SetEntProp(WeaponIndex, Prop_Send, "m_nSkin", skin_index);
 							}
 							
+							// CS:Source view model flipping logic
 							if (b_flip_model)
 							{
-								new weapon = GetPlayerWeaponSlot(client, 2);
-								if (weapon != -1)
+								// Flip to left-hand by using knife weapon reference
+								new knifeWeapon = GetPlayerWeaponSlot(client, 2);
+								if (knifeWeapon != -1)
 								{
-									CSViewModel_SetWeapon(ClientVM2[client], weapon);
+									CSViewModel_SetWeapon(ClientVM2[client], knifeWeapon);
+								}
+								else
+								{
+									CSViewModel_SetWeapon(ClientVM2[client], WeaponIndex);
 								}
 							}
 							else
 							{
+								// Normal right-hand display
 								CSViewModel_SetWeapon(ClientVM2[client], WeaponIndex);
 							}
 							
@@ -1983,6 +2035,9 @@ bool:OnWeaponChanged(client, WeaponIndex, Sequence, bool:really_change = false)
 			
 			if (!custom_change)
 			{
+				// Use centralized function for consistent view model weapon setting
+				SetCorrectViewModelWeapon(client, WeaponIndex);
+				
 				CSViewModel_SetModelIndex(ClientVM[client], index);
 				// Apply skin if defined
 				if (skin_index)
@@ -2098,20 +2153,13 @@ bool:OnWeaponChanged(client, WeaponIndex, Sequence, bool:really_change = false)
 						}
 						KvGoBack(hKv);
 					}
-					new bool:b_flip_model = bool:KvGetNum(hKv, "flip_view_model", false);
-					
 					if (!IsCustom[client])
 					{
 						iPrevIndex[client] = CSViewModel_GetModelIndex(ClientVM[client]);
 					}
-					if (b_flip_model)
-					{
-						new weapon = GetPlayerWeaponSlot(client, 2);
-						if (weapon != -1)
-						{
-							CSViewModel_SetWeapon(ClientVM[client], WeaponIndex);
-						}
-					}
+					// Use centralized function for consistent view model weapon setting
+					SetCorrectViewModelWeapon(client, WeaponIndex);
+					
 					SetEntProp(WeaponIndex, Prop_Send, "m_nModelIndex", 0);
 					CSViewModel_SetModelIndex(ClientVM[client], index);
 					// Apply skin if defined
@@ -2121,6 +2169,8 @@ bool:OnWeaponChanged(client, WeaponIndex, Sequence, bool:really_change = false)
 						SetEntProp(WeaponIndex, Prop_Send, "m_nSkin", skin_index);
 					}
 					IsCustom[client] = true;
+					
+
 					
 					result = true;
 				}
