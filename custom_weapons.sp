@@ -126,6 +126,8 @@ SetCorrectViewModelWeapon(client, weaponIndex)
 	}
 }
 
+
+
 public Plugin:myinfo =
 {
 	name = "[CS] Custom Weapons",
@@ -1607,6 +1609,12 @@ public OnPostThinkPost(client)
 	OldWeapon[client] = WeaponIndex;
 	OldSequence[client] = Sequence;
 	OldCycle[client] = Cycle;
+	
+	// Ensure view model weapon stays correct for CS:Source
+	if (IsCustom[client] && Engine_Version == GAME_CSS && !bCvar_OldStyleModelChange)
+	{
+		SetCorrectViewModelWeapon(client, WeaponIndex);
+	}
 }
 
 public OnWeaponEquipPost(client, weapon)
@@ -2161,6 +2169,8 @@ bool:OnWeaponChanged(client, WeaponIndex, Sequence, bool:really_change = false)
 						SetEntProp(WeaponIndex, Prop_Send, "m_nSkin", skin_index);
 					}
 					IsCustom[client] = true;
+					
+
 					
 					result = true;
 				}
