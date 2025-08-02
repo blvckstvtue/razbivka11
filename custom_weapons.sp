@@ -397,6 +397,10 @@ public OnConVarChange(Handle:convar, const String:oldValue[], const String:newVa
 				new weapon = CSPlayer_GetActiveWeapon(client);
 				if (weapon != -1)
 				{
+					if (g_bDev[client])
+					{
+						PrintToChat(client, "\x06OnWeaponChanged called from OnConVarChange (hCvar_Enable)");
+					}
 					OnWeaponChanged(client, weapon, CSViewModel_GetSequence(ClientVM[client]));
 				}
 				
@@ -440,6 +444,10 @@ public OnConVarChange(Handle:convar, const String:oldValue[], const String:newVa
 							CSViewModel_RemoveEffects(ClientVM2[client], EF_NODRAW);
 							CSViewModel_AddEffects(ClientVM[client], EF_NODRAW);
 							
+							if (g_bDev[client])
+							{
+								PrintToChat(client, "\x06OnWeaponChanged called from OnConVarChange (OldStyleModelChange - true)");
+							}
 							OnWeaponChanged(client, CSPlayer_GetActiveWeapon(client), CSViewModel_GetSequence(ClientVM[client]));
 						}
 						SDKUnhook(client, SDKHook_PostThinkPost, OnPostThinkPost);
@@ -452,6 +460,10 @@ public OnConVarChange(Handle:convar, const String:oldValue[], const String:newVa
 							CSViewModel_AddEffects(ClientVM2[client], EF_NODRAW);
 							CSViewModel_RemoveEffects(ClientVM[client], EF_NODRAW);
 							
+							if (g_bDev[client])
+							{
+								PrintToChat(client, "\x06OnWeaponChanged called from OnConVarChange (OldStyleModelChange - false)");
+							}
 							OnWeaponChanged(client, CSPlayer_GetActiveWeapon(client), CSViewModel_GetSequence(ClientVM[client]));
 						}
 						SDKUnhook(client, SDKHook_PostThinkPost, OnPostThinkPost_Old);
@@ -1379,7 +1391,7 @@ public OnPostThinkPost_Old(client)
 	{
 		if (g_bDev[client])
 		{
-			PrintToChat(client, "\x03Weapon changed from %d to %d", OldWeapon[client], WeaponIndex);
+			PrintToChat(client, "\x03Weapon changed from %d to %d (OldStyle)", OldWeapon[client], WeaponIndex);
 		}
 		OldWeapon[client] = WeaponIndex;
 		return;
@@ -1514,7 +1526,7 @@ public OnPostThinkPost(client)
 	{
 		if (g_bDev[client])
 		{
-			PrintToChat(client, "\x03Weapon changed from %d to %d (really_change)", OldWeapon[client], WeaponIndex);
+			PrintToChat(client, "\x03Weapon changed from %d to %d (NewStyle)", OldWeapon[client], WeaponIndex);
 		}
 		OldWeapon[client] = WeaponIndex;
 		return;
@@ -1686,6 +1698,11 @@ public OnWeaponEquipPost(client, weapon)
 }
 
 bool:OnWeaponChanged(client, WeaponIndex, Sequence, bool:really_change = false)
+{
+	if (g_bDev[client])
+	{
+		PrintToChat(client, "\x02OnWeaponChanged called - Weapon: %d, really_change: %s", WeaponIndex, really_change ? "true" : "false");
+	}
 {
 	if (Engine_Version == GAME_CSS_34 || (Engine_Version == GAME_CSS && bCvar_OldStyleModelChange))
 	{
@@ -2343,6 +2360,10 @@ public MainMenu_Handler(Handle:menu, MenuAction:action, param1, param2)
 						{
 							NextChange[param1] = game_time + 5.0;
 							
+							if (g_bDev[param1])
+							{
+								PrintToChat(param1, "\x05OnWeaponChanged called from menu (case 7)");
+							}
 							OnWeaponChanged(param1, weapon, CSViewModel_GetSequence(ClientVM[param1]));
 							OldBits[param1] = 0;
 						}
