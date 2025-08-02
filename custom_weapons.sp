@@ -65,6 +65,42 @@ new String:g_sServLang[3];
 new String:g_sDroppedModel[32] = "world_model_index";
 new iPrevIndex[MAXPLAYERS+1];
 
+// Function to set the correct view model weapon for CS:Source
+SetCorrectViewModelWeapon(client, weaponIndex)
+{
+	if (Engine_Version == GAME_CSS && !bCvar_OldStyleModelChange)
+	{
+		// Check if this is a knife weapon
+		decl String:className[32];
+		GetEdictClassname(weaponIndex, className, sizeof(className));
+		StringToLower(className, className, sizeof(className));
+		
+		if (StrEqual(className, "weapon_knife"))
+		{
+			// For knives, use weapon directly (keeps them on right hand)
+			CSViewModel_SetWeapon(ClientVM[client], weaponIndex);
+		}
+		else
+		{
+			// For other weapons, use knife reference to show on right hand
+			new knifeWeapon = GetPlayerWeaponSlot(client, 2);
+			if (knifeWeapon != -1)
+			{
+				CSViewModel_SetWeapon(ClientVM[client], knifeWeapon);
+			}
+			else
+			{
+				CSViewModel_SetWeapon(ClientVM[client], weaponIndex);
+			}
+		}
+	}
+	else
+	{
+		// For other versions, use weapon directly
+		CSViewModel_SetWeapon(ClientVM[client], weaponIndex);
+	}
+}
+
 
 
 new Handle:hCvar_Enable, bool:bCvar_Enable;
@@ -1991,28 +2027,8 @@ bool:OnWeaponChanged(client, WeaponIndex, Sequence, bool:really_change = false)
 			
 			if (!custom_change)
 			{
-				// Check for flip_view_model setting in registered model
-				new bool:b_flip_reg = bool:KvGetNum(hRegKv, "flip_view_model", false);
-				
-				// Registered model logic - use knife reference to flip to right hand
-				if (b_flip_reg)
-				{
-					// Use weapon directly (left hand)
-					CSViewModel_SetWeapon(ClientVM[client], WeaponIndex);
-				}
-				else
-				{
-					// Use knife reference to flip to right hand (default)
-					new knifeWeapon = GetPlayerWeaponSlot(client, 2);
-					if (knifeWeapon != -1)
-					{
-						CSViewModel_SetWeapon(ClientVM[client], knifeWeapon);
-					}
-					else
-					{
-						CSViewModel_SetWeapon(ClientVM[client], WeaponIndex);
-					}
-				}
+				// Use centralized function for consistent view model weapon setting
+				SetCorrectViewModelWeapon(client, WeaponIndex);
 				
 				CSViewModel_SetModelIndex(ClientVM[client], index);
 				// Apply skin if defined
@@ -2129,31 +2145,12 @@ bool:OnWeaponChanged(client, WeaponIndex, Sequence, bool:really_change = false)
 						}
 						KvGoBack(hKv);
 					}
-					new bool:b_flip_model = bool:KvGetNum(hKv, "flip_view_model", false);
-					
 					if (!IsCustom[client])
 					{
 						iPrevIndex[client] = CSViewModel_GetModelIndex(ClientVM[client]);
 					}
-					// CS:Source view model logic - use knife reference to flip to right hand
-					if (b_flip_model)
-					{
-						// Use weapon directly (left hand)
-						CSViewModel_SetWeapon(ClientVM[client], WeaponIndex);
-					}
-					else
-					{
-						// Use knife reference to flip to right hand (default)
-						new knifeWeapon = GetPlayerWeaponSlot(client, 2);
-						if (knifeWeapon != -1)
-						{
-							CSViewModel_SetWeapon(ClientVM[client], knifeWeapon);
-						}
-						else
-						{
-							CSViewModel_SetWeapon(ClientVM[client], WeaponIndex);
-						}
-					}
+					// Use centralized function for consistent view model weapon setting
+					SetCorrectViewModelWeapon(client, WeaponIndex);
 					
 					SetEntProp(WeaponIndex, Prop_Send, "m_nModelIndex", 0);
 					CSViewModel_SetModelIndex(ClientVM[client], index);
