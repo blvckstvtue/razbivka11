@@ -638,6 +638,12 @@ CacheModels(Handle:kv)
 						{
 							KvSetNum(hKv, "skin", KvGetNum(kv, "skin", 0));
 						}
+						else
+						{
+							// Set default skin to 0 for models without skin families
+							// This ensures models load properly even when no skin is specified in config
+							KvSetNum(hKv, "skin", 0);
+						}
 						KvSetNum(hKv, "flag_bits", ReadFlagString(buffer));
 						
 						KvGetString(kv, "view_model", buffer, sizeof(buffer));
