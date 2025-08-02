@@ -1881,19 +1881,16 @@ bool:OnWeaponChanged(client, WeaponIndex, Sequence, bool:really_change = false)
 								if (knifeWeapon != -1)
 								{
 									CSViewModel_SetWeapon(ClientVM2[client], knifeWeapon);
-									PrintToConsole(client, "[CW] Set LEFT hand (knife ref) for ClientVM2");
 								}
 								else
 								{
 									CSViewModel_SetWeapon(ClientVM2[client], WeaponIndex);
-									PrintToConsole(client, "[CW] Set LEFT hand (weapon) for ClientVM2");
 								}
 							}
 							else
 							{
 								// Normal right-hand display
 								CSViewModel_SetWeapon(ClientVM2[client], WeaponIndex);
-								PrintToConsole(client, "[CW] Set RIGHT hand for ClientVM2");
 							}
 							
 							CSViewModel_SetSequence(ClientVM2[client], Sequence);
@@ -1997,28 +1994,8 @@ bool:OnWeaponChanged(client, WeaponIndex, Sequence, bool:really_change = false)
 				// Check for flip_view_model setting in registered model
 				new bool:b_flip_reg = bool:KvGetNum(hRegKv, "flip_view_model", false);
 				
-				// Apply flip logic for registered models too
-				if (b_flip_reg)
-				{
-					// Flip to left-hand by using knife weapon reference
-					new knifeWeapon = GetPlayerWeaponSlot(client, 2);
-					if (knifeWeapon != -1)
-					{
-						CSViewModel_SetWeapon(ClientVM[client], knifeWeapon);
-						PrintToConsole(client, "[CW REG] Set LEFT hand (knife ref) for ClientVM");
-					}
-					else
-					{
-						CSViewModel_SetWeapon(ClientVM[client], WeaponIndex);
-						PrintToConsole(client, "[CW REG] Set LEFT hand (weapon) for ClientVM");
-					}
-				}
-				else
-				{
-					// Normal right-hand display
-					CSViewModel_SetWeapon(ClientVM[client], WeaponIndex);
-					PrintToConsole(client, "[CW REG] Set RIGHT hand for ClientVM");
-				}
+				// Simplified registered model logic - always use weapon for right hand
+				CSViewModel_SetWeapon(ClientVM[client], WeaponIndex);
 				
 				CSViewModel_SetModelIndex(ClientVM[client], index);
 				// Apply skin if defined
@@ -2141,28 +2118,8 @@ bool:OnWeaponChanged(client, WeaponIndex, Sequence, bool:really_change = false)
 					{
 						iPrevIndex[client] = CSViewModel_GetModelIndex(ClientVM[client]);
 					}
-					// CS:Source view model flipping logic for main view model
-					if (b_flip_model)
-					{
-						// Flip to left-hand by using knife weapon reference
-						new knifeWeapon = GetPlayerWeaponSlot(client, 2);
-						if (knifeWeapon != -1)
-						{
-							CSViewModel_SetWeapon(ClientVM[client], knifeWeapon);
-							PrintToConsole(client, "[CW] Set LEFT hand (knife ref) for ClientVM");
-						}
-						else
-						{
-							CSViewModel_SetWeapon(ClientVM[client], WeaponIndex);
-							PrintToConsole(client, "[CW] Set LEFT hand (weapon) for ClientVM");
-						}
-					}
-					else
-					{
-						// Normal right-hand display
-						CSViewModel_SetWeapon(ClientVM[client], WeaponIndex);
-						PrintToConsole(client, "[CW] Set RIGHT hand for ClientVM");
-					}
+					// Simplified CS:Source view model logic - always use weapon for right hand
+					CSViewModel_SetWeapon(ClientVM[client], WeaponIndex);
 					
 					SetEntProp(WeaponIndex, Prop_Send, "m_nModelIndex", 0);
 					CSViewModel_SetModelIndex(ClientVM[client], index);
