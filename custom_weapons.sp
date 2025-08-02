@@ -645,14 +645,15 @@ CacheModels(Handle:kv)
 							KvSetNum(hKv, "skin", 0);
 						}
 						
-						// Set default flip_view_model to true for custom models to show them right-handed
-						if (KvGetNum(kv, "flip_view_model", -1) == -1)
+						// Store flip_view_model setting if specified
+						if (KvGetNum(kv, "flip_view_model", -1) != -1)
 						{
-							KvSetNum(hKv, "flip_view_model", 1);
+							KvSetNum(hKv, "flip_view_model", KvGetNum(kv, "flip_view_model", 0));
 						}
 						else
 						{
-							KvSetNum(hKv, "flip_view_model", KvGetNum(kv, "flip_view_model", 1));
+							// Default to 0 (no flip) if not specified
+							KvSetNum(hKv, "flip_view_model", 0);
 						}
 						
 						KvSetNum(hKv, "flag_bits", ReadFlagString(buffer));
@@ -1905,11 +1906,7 @@ bool:OnWeaponChanged(client, WeaponIndex, Sequence, bool:really_change = false)
 							CSViewModel_SetSequence(ClientVM2[client], Sequence);
 							CSViewModel_SetPlaybackRate(ClientVM2[client], CSViewModel_GetPlaybackRate(ClientVM[client]));
 							
-							// Force right-handed view for custom models
-							if (b_flip_model)
-							{
-								ClientCommand(client, "cl_righthand 1");
-							}
+
 							
 							IsCustom[client] = true;
 							
@@ -2144,11 +2141,7 @@ bool:OnWeaponChanged(client, WeaponIndex, Sequence, bool:really_change = false)
 						SetEntProp(WeaponIndex, Prop_Send, "m_nSkin", skin_index);
 					}
 					
-					// Force right-handed view for custom models
-					if (b_flip_model)
-					{
-						ClientCommand(client, "cl_righthand 1");
-					}
+
 					
 					IsCustom[client] = true;
 					
