@@ -638,6 +638,25 @@ CacheModels(Handle:kv)
 						{
 							KvSetNum(hKv, "skin", KvGetNum(kv, "skin", 0));
 						}
+						else
+						{
+							// Set default skin to 0 for models without skin families
+							// This ensures models load properly even when no skin is specified in config
+							KvSetNum(hKv, "skin", 0);
+						}
+						
+						// Store flip_view_model setting if specified
+						// Note: flip_view_model in this plugin changes weapon reference, not visual flip
+						if (KvGetNum(kv, "flip_view_model", -1) != -1)
+						{
+							KvSetNum(hKv, "flip_view_model", KvGetNum(kv, "flip_view_model", 0));
+						}
+						else
+						{
+							// Default to 0 (no flip) if not specified
+							KvSetNum(hKv, "flip_view_model", 0);
+						}
+						
 						KvSetNum(hKv, "flag_bits", ReadFlagString(buffer));
 						
 						KvGetString(kv, "view_model", buffer, sizeof(buffer));
@@ -1888,6 +1907,8 @@ bool:OnWeaponChanged(client, WeaponIndex, Sequence, bool:really_change = false)
 							CSViewModel_SetSequence(ClientVM2[client], Sequence);
 							CSViewModel_SetPlaybackRate(ClientVM2[client], CSViewModel_GetPlaybackRate(ClientVM[client]));
 							
+
+							
 							IsCustom[client] = true;
 							
 							result = true;
@@ -2120,6 +2141,9 @@ bool:OnWeaponChanged(client, WeaponIndex, Sequence, bool:really_change = false)
 						SetEntProp(ClientVM[client], Prop_Send, "m_nSkin", skin_index);
 						SetEntProp(WeaponIndex, Prop_Send, "m_nSkin", skin_index);
 					}
+					
+
+					
 					IsCustom[client] = true;
 					
 					result = true;
