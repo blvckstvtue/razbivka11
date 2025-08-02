@@ -183,7 +183,7 @@ public OnPluginStart()
 	bCvar_MenuCloseNotice = GetConVarBool(hCvar_MenuCloseNotice);
 	HookConVarChange(hCvar_MenuCloseNotice, OnConVarChange);
 	
-	hCvar_OldStyleModelChange = CreateConVar("sm_custom_weapons_css_old_style_model_change", "0", "CS:S OB Use old style model change method for flip view model support. Not recommended! May reduce server performance", FCVAR_PLUGIN, true, 0.0, true, 1.0);
+	hCvar_OldStyleModelChange = CreateConVar("sm_custom_weapons_css_old_style_model_change", "1", "CS:S OB Use old style model change method for flip view model support. Not recommended! May reduce server performance", FCVAR_PLUGIN, true, 0.0, true, 1.0);
 	bCvar_OldStyleModelChange = GetConVarBool(hCvar_OldStyleModelChange);
 	HookConVarChange(hCvar_OldStyleModelChange, OnConVarChange);
 	
@@ -1860,44 +1860,7 @@ bool:OnWeaponChanged(client, WeaponIndex, Sequence, bool:really_change = false)
 						}
 						new bool:b_flip_model = bool:KvGetNum(hKv, "flip_view_model", true);
 						
-						if (Engine_Version == GAME_CSGO)
-						{
-							// CS:GO uses only the main view model
-							if (!IsCustom[client])
-							{
-								iPrevIndex[client] = CSViewModel_GetModelIndex(ClientVM[client]);
-							}
-							
-							CSViewModel_SetModelIndex(ClientVM[client], index);
-							if (skin_index)
-							{
-								SetEntProp(ClientVM[client], Prop_Send, "m_nSkin", skin_index);
-								SetEntProp(WeaponIndex, Prop_Send, "m_nSkin", skin_index);
-							}
-							
-							if (b_flip_model)
-							{
-								// For right-handed display (normal)
-								CSViewModel_SetWeapon(ClientVM[client], WeaponIndex);
-							}
-							else
-							{
-								// For left-handed models, try to use knife for flipping
-								new weapon = GetPlayerWeaponSlot(client, 2);
-								if (weapon != -1)
-								{
-									CSViewModel_SetWeapon(ClientVM[client], weapon);
-								}
-								else
-								{
-									CSViewModel_SetWeapon(ClientVM[client], WeaponIndex);
-								}
-							}
-							
-							IsCustom[client] = true;
-							result = true;
-						}
-						else if (IsValidEdict(ClientVM2[client]))
+						if (IsValidEdict(ClientVM2[client]))
 						{
 							// Older CS versions with dual view models
 							CSViewModel_AddEffects(ClientVM[client], EF_NODRAW);
@@ -1910,22 +1873,24 @@ bool:OnWeaponChanged(client, WeaponIndex, Sequence, bool:really_change = false)
 								SetEntProp(WeaponIndex, Prop_Send, "m_nSkin", skin_index);
 							}
 							
-							if (!b_flip_model)
+							// CS:Source view model flipping logic
+							if (b_flip_model)
 							{
-								// For left-handed models, use knife slot to flip orientation
-								new weapon = GetPlayerWeaponSlot(client, 2);
-								if (weapon != -1)
+								// Normal right-hand display
+								CSViewModel_SetWeapon(ClientVM2[client], WeaponIndex);
+							}
+							else
+							{
+								// Try to flip to left-hand by using knife weapon reference
+								new knifeWeapon = GetPlayerWeaponSlot(client, 2);
+								if (knifeWeapon != -1)
 								{
-									CSViewModel_SetWeapon(ClientVM2[client], weapon);
+									CSViewModel_SetWeapon(ClientVM2[client], knifeWeapon);
 								}
 								else
 								{
 									CSViewModel_SetWeapon(ClientVM2[client], WeaponIndex);
 								}
-							}
-							else
-							{
-								CSViewModel_SetWeapon(ClientVM2[client], WeaponIndex);
 							}
 							
 							CSViewModel_SetSequence(ClientVM2[client], Sequence);
@@ -2147,18 +2112,8 @@ bool:OnWeaponChanged(client, WeaponIndex, Sequence, bool:really_change = false)
 					{
 						iPrevIndex[client] = CSViewModel_GetModelIndex(ClientVM[client]);
 					}
-					// Default weapon assignment
-					CSViewModel_SetWeapon(ClientVM[client], WeaponIndex);
-					
-					if (!b_flip_model)
-					{
-						// For left-handed models, use knife slot to flip orientation
-						new weapon = GetPlayerWeaponSlot(client, 2);
-						if (weapon != -1)
-						{
-							CSViewModel_SetWeapon(ClientVM[client], weapon);
-						}
-					}
+					// For CS:Source, the flip logic doesn't work properly with predicted viewmodels
+					// Just use the weapon index directly
 					SetEntProp(WeaponIndex, Prop_Send, "m_nModelIndex", 0);
 					CSViewModel_SetModelIndex(ClientVM[client], index);
 					// Apply skin if defined
