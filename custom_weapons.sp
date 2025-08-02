@@ -27,6 +27,7 @@ new observer_mode;
 enum
 {
 	Type_Primary,
+	Type_Knife,
 	Type_C4,
 	Type_Max
 }
@@ -1225,6 +1226,20 @@ OnPrePostThinkPost(client)
 		
 		WeaponAddons[client][Type_Primary] = 0;
 	}
+	// Handle knife weapons (slot 2)
+	new knife_weapon = GetPlayerWeaponSlot(client, 2);
+	if (knife_weapon != -1)
+	{
+		if (WeaponAddons[client][Type_Knife] > 0 && IsValidEdict(WeaponAddons[client][Type_Knife]))
+		{
+			AcceptEntityInput(WeaponAddons[client][Type_Knife], "kill");
+		}
+		
+		WeaponAddons[client][Type_Knife] = 0;
+		
+		CacheWeaponOn(client, knife_weapon, Type_Knife, "knife");
+	}
+	
 	if (bits & CSAddon_C4)
 	{
 		if (!(OldBits[client] & CSAddon_C4))
@@ -1257,6 +1272,11 @@ OnPrePostThinkPost(client)
 	if (WeaponAddons[client][Type_Primary] != 0)
 	{
 		bits_to_remove |= CSAddon_PrimaryWeapon;
+	}
+	if (WeaponAddons[client][Type_Knife] != 0)
+	{
+		// For knife, we don't remove any addon bits since there's no CSAddon_Knife
+		// The knife will be handled separately
 	}
 	if (WeaponAddons[client][Type_C4] != 0)
 	{
@@ -1372,8 +1392,7 @@ public OnPostThinkPost_Old(client)
 		OldWeapon[client] = WeaponIndex;
 		return;
 	}
-	else
-	if (IsCustom[client])
+	else if (IsCustom[client])
 	{
 		if (g_bDev[client])
 		{
@@ -1504,8 +1523,7 @@ public OnPostThinkPost(client)
 		OldWeapon[client] = WeaponIndex;
 		return;
 	}
-	else
-	if (IsCustom[client])
+	else if (IsCustom[client])
 	{
 		switch (Function_OnWeaponThink(hPlugin[client], weapon_sequence[client], client, WeaponIndex, ClientVM[client], OldSequence[client], Sequence))
 		{
