@@ -644,6 +644,17 @@ CacheModels(Handle:kv)
 							// This ensures models load properly even when no skin is specified in config
 							KvSetNum(hKv, "skin", 0);
 						}
+						
+						// Set default flip_view_model to true for custom models to show them right-handed
+						if (KvGetNum(kv, "flip_view_model", -1) == -1)
+						{
+							KvSetNum(hKv, "flip_view_model", 1);
+						}
+						else
+						{
+							KvSetNum(hKv, "flip_view_model", KvGetNum(kv, "flip_view_model", 1));
+						}
+						
 						KvSetNum(hKv, "flag_bits", ReadFlagString(buffer));
 						
 						KvGetString(kv, "view_model", buffer, sizeof(buffer));
@@ -1894,6 +1905,15 @@ bool:OnWeaponChanged(client, WeaponIndex, Sequence, bool:really_change = false)
 							CSViewModel_SetSequence(ClientVM2[client], Sequence);
 							CSViewModel_SetPlaybackRate(ClientVM2[client], CSViewModel_GetPlaybackRate(ClientVM[client]));
 							
+							// Flip the view model visually to right-handed by default
+							if (b_flip_model)
+							{
+								new Float:angles[3];
+								GetEntPropVector(ClientVM2[client], Prop_Send, "m_angRotation", angles);
+								angles[1] += 180.0; // Flip Y-axis
+								SetEntPropVector(ClientVM2[client], Prop_Send, "m_angRotation", angles);
+							}
+							
 							IsCustom[client] = true;
 							
 							result = true;
@@ -2126,6 +2146,16 @@ bool:OnWeaponChanged(client, WeaponIndex, Sequence, bool:really_change = false)
 						SetEntProp(ClientVM[client], Prop_Send, "m_nSkin", skin_index);
 						SetEntProp(WeaponIndex, Prop_Send, "m_nSkin", skin_index);
 					}
+					
+					// Flip the view model visually to right-handed by default
+					if (b_flip_model)
+					{
+						new Float:angles[3];
+						GetEntPropVector(ClientVM[client], Prop_Send, "m_angRotation", angles);
+						angles[1] += 180.0; // Flip Y-axis
+						SetEntPropVector(ClientVM[client], Prop_Send, "m_angRotation", angles);
+					}
+					
 					IsCustom[client] = true;
 					
 					result = true;
